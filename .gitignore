@@ -1,4 +1,4 @@
-# OS
+3# OS
 .DS_Store
 Thumbs.db
 
@@ -19,6 +19,13 @@ crash.*.log
 .env
 *.pem
 *.key
+*-key*
+!*.pub
 
 # Logs
 *.log
+
+# Terraform state (anywhere in repo, not just terraform/)
+terraform.tfstate
+terraform.tfstate.backup
+
