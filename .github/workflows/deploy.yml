@@ -1,23 +1,23 @@
 name: Build, Push, and Deploy Portfolio
-
+ 
 on:
   push:
     branches: [main]
-
+ 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
+ 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+ 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+ 
       - name: Build and push image
         env:
           IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/portfolio-site
@@ -26,7 +26,7 @@ jobs:
           docker build -t $IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:latest .
           docker push $IMAGE_NAME:$IMAGE_TAG
           docker push $IMAGE_NAME:latest
-
+ 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -35,14 +35,16 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/portfolio-site:latest
-
+ 
             docker stop portfolio-site || true
             docker rm portfolio-site || true
-
+ 
             docker run -d \
               --name portfolio-site \
               -p 80:80 \
+              -p 443:443 \
+              -v /etc/letsencrypt:/etc/letsencrypt:ro \
               --restart unless-stopped \
               ${{ secrets.DOCKERHUB_USERNAME }}/portfolio-site:latest
-
+ 
             docker image prune -f
